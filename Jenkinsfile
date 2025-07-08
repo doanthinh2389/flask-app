@@ -1,5 +1,10 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'python:3.9-slim'
+            args '-v /var/run/docker.sock:/var/run/docker.sock'
+        }
+    }
 
     environment {
         DOCKER_IMAGE = 'doanthinh2389/flask-app'
@@ -16,7 +21,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    docker.build("${DOCKER_IMAGE}:${DOCKER_TAG}")
+                    sh "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
                 }
             }
         }
@@ -26,10 +31,7 @@ pipeline {
                 script {
                     sh 'docker stop flask-app || true'
                     sh 'docker rm flask-app || true'
-
-                    docker.image("${DOCKER_IMAGE}:${DOCKER_TAG}").run(
-                        "--name flask-app -p 5000:5000 -d"
-                    )
+                    sh "docker run --name flask-app -p 5000:5000 -d ${DOCKER_IMAGE}:${DOCKER_TAG}"
                 }
             }
         }
@@ -41,3 +43,4 @@ pipeline {
         }
     }
 }
+
